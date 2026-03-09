@@ -10,15 +10,23 @@ To iterate quickly, keep browser DevTools open (F12) so console errors surface i
 
 ## Git Workflow
 
-All changes must be committed and pushed to GitHub after every meaningful edit:
+**After every task or meaningful change, commit and push immediately.** This is non-negotiable — it ensures no work is ever lost and the repository always reflects the current state of the project.
 
 ```bash
 git add <specific files>
-git commit -m "descriptive message"
+git commit -m "short imperative subject line
+
+Optional body explaining why, not what."
 git push
 ```
 
-Never use `git add -A` or `git add .` — stage only the files that were intentionally changed.
+Rules:
+- Stage only the files that were intentionally changed — never `git add -A` or `git add .`
+- Commit after each self-contained piece of work (bug fix, feature, tweak) — not just at the end of a session
+- Commit messages must use the imperative mood ("Add X", "Fix Y", "Remove Z"), be specific, and explain intent where the diff alone isn't obvious
+- Always `git push` immediately after committing — a local-only commit is not a saved state
+- All commits must include the co-author trailer:
+  `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>`
 
 ## Architecture
 
