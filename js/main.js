@@ -24,6 +24,7 @@ const game = {
     levelIndex: 0,
     waveIndex:  0,   // 0-based within current level
     screenFlash: 0,  // seconds remaining
+    nextHealthPackLevel: 0,  // level index when the next health pack is allowed
 };
 
 // ---- Helpers ----
@@ -57,6 +58,8 @@ function startLevel(levelIndex) {
 function startNewGame() {
     ScoreSystem.reset();
     game.player = new Player(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    // Schedule first health pack after a random number of levels (2–10)
+    game.nextHealthPackLevel = 2 + Math.floor(Math.random() * 9);
     updateCamera();
     startLevel(0);
     gameState = 'PLAYING';
@@ -78,23 +81,21 @@ function spawnWavePowerups() {
     const camX = game.camera.x;
     const camY = game.camera.y;
 
-    // Always drop one random combat powerup (speed or strength)
-    const combatTypes = ['speed', 'strength'];
-    const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-    const p1 = _randomPowerupPos(camX, camY);
-    game.powerups.push(new Powerup(pick, p1.x, p1.y));
-
-    // 55% chance of a second combat powerup
-    if (Math.random() < 0.55) {
-        const pick2 = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-        const p2 = _randomPowerupPos(camX, camY);
-        game.powerups.push(new Powerup(pick2, p2.x, p2.y));
+    // Max 1 combat powerup per wave, 30% chance of it appearing at all
+    if (Math.random() < 0.30) {
+        const combatTypes = ['speed', 'strength'];
+        const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
+        const p1 = _randomPowerupPos(camX, camY);
+        game.powerups.push(new Powerup(pick, p1.x, p1.y));
     }
 
-    // 65% chance of a health pack
-    if (Math.random() < 0.65) {
-        const p3 = _randomPowerupPos(camX, camY);
-        game.powerups.push(new Powerup('health', p3.x, p3.y));
+    // Health pack: only on the first wave of a qualifying level.
+    // The next qualifying level is chosen randomly (interval 2–10 levels).
+    if (game.waveIndex === 0 && game.levelIndex >= game.nextHealthPackLevel) {
+        const p2 = _randomPowerupPos(camX, camY);
+        game.powerups.push(new Powerup('health', p2.x, p2.y));
+        // Schedule the next health pack 2–10 levels from now
+        game.nextHealthPackLevel = game.levelIndex + 2 + Math.floor(Math.random() * 9);
     }
 }
 
