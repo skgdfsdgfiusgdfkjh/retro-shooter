@@ -176,6 +176,7 @@ function updatePlaying(dt, mx, my) {
 
     // Update player
     p.update(dt, mx, my, game.camera.x, game.camera.y);
+    resolveTerrainCollision(p);
 
     // Shoot
     const bullet = p.tryShoot();
@@ -199,7 +200,10 @@ function updatePlaying(dt, mx, my) {
     game.bullets = game.bullets.filter(b => !b.dead);
 
     // Update enemies
-    game.enemies.forEach(e => e.update(dt, p.x, p.y));
+    game.enemies.forEach(e => {
+        e.update(dt, p.x, p.y);
+        resolveTerrainCollision(e);
+    });
 
     // Update particles
     game.particles.forEach(part => part.update(dt));
