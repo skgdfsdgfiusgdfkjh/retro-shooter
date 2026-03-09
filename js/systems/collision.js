@@ -13,6 +13,26 @@ function circleCollide(a, b) {
 }
 
 /**
+ * Check enemy bullets against the player.
+ * @returns {{ screenFlash: boolean }}
+ */
+function processEnemyBulletCollisions(enemyBullets, player, particles) {
+    let screenFlash = false;
+    for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const b = enemyBullets[i];
+        if (b.dead) continue;
+        if (circleCollide(b, player)) {
+            b.dead = true;
+            player.takeDamage(b.damage);
+            spawnDeathParticles(b.x, b.y, '#ff6600', 4)
+                .forEach(p => particles.push(p));
+            if (player.hitFlashTimer > 0) screenFlash = true;
+        }
+    }
+    return { screenFlash };
+}
+
+/**
  * Apply melee damage to all enemies within the player's swing arc.
  * Call this once at the moment the swing is triggered (not each frame).
  *

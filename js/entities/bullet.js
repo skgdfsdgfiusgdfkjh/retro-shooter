@@ -8,15 +8,17 @@ class Bullet {
      * @param {number} y        world y
      * @param {number} angle    direction in radians
      */
-    constructor(x, y, angle, damage = BULLET_DAMAGE) {
-        this.x      = x;
-        this.y      = y;
-        this.vx     = Math.cos(angle) * BULLET_SPEED;
-        this.vy     = Math.sin(angle) * BULLET_SPEED;
-        this.radius = BULLET_RADIUS;
-        this.damage = damage;
-        this.life   = BULLET_LIFETIME;
-        this.dead   = false;
+    constructor(x, y, angle, damage = BULLET_DAMAGE, speed = BULLET_SPEED, bulletColor = null, glowColor = null) {
+        this.x           = x;
+        this.y           = y;
+        this.vx          = Math.cos(angle) * speed;
+        this.vy          = Math.sin(angle) * speed;
+        this.radius      = BULLET_RADIUS;
+        this.damage      = damage;
+        this.life        = BULLET_LIFETIME;
+        this.dead        = false;
+        this.bulletColor = bulletColor;
+        this.glowColor   = glowColor;
 
         // Trail: store last N positions (world coords)
         this.trail = [];
@@ -40,6 +42,6 @@ class Bullet {
             x: p.x - camX,
             y: p.y - camY,
         }));
-        drawBullet(ctx, this.x - camX, this.y - camY, screenTrail);
+        drawBullet(ctx, this.x - camX, this.y - camY, screenTrail, this.bulletColor, this.glowColor);
     }
 }

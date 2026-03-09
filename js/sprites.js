@@ -249,6 +249,55 @@ const ENEMY_FRAMES_TANK = [
     ],
 ];
 
+// Sniper — blue-uniformed soldier girl "Hana" (9×13)
+// Cool blue uniform, brown hair tied back, amber eyes, combat stance
+const PALETTE_ENEMY_SNIPER = [
+    null,           // 0 transparent
+    '#ffd0a8',      // 1 skin
+    '#222233',      // 2 dark outline
+    '#334488',      // 3 dark blue uniform
+    '#4466bb',      // 4 medium blue accent
+    '#7b5c3a',      // 5 brown hair
+    '#ffaa33',      // 6 amber eyes / scope lens
+    '#cccccc',      // 7 silver barrel / metal
+    '#666688',      // 8 dark boots / gun stock
+];
+
+const ENEMY_FRAMES_SNIPER = [
+    // Frame 0 — idle / aimed
+    [
+        [0,0,5,2,2,2,0,0,0],   // hair crown
+        [0,5,2,1,1,1,2,0,0],   // head + hair side
+        [0,2,1,1,1,1,1,2,0],   // face
+        [0,2,6,2,1,2,6,2,0],   // amber eyes
+        [0,2,1,1,1,1,1,2,0],   // lower face
+        [0,0,2,3,4,3,2,0,0],   // collar + accent
+        [0,2,3,3,3,3,3,2,0],   // chest
+        [2,3,3,3,3,3,3,3,2],   // arms spread wide
+        [0,2,3,3,3,3,3,2,0],   // lower torso
+        [0,0,3,3,1,3,3,0,0],   // upper thighs
+        [0,0,3,1,0,1,3,0,0],   // mid legs
+        [0,0,3,1,0,1,3,0,0],   // lower legs
+        [0,0,8,8,0,8,8,0,0],   // boots
+    ],
+    // Frame 1 — stride
+    [
+        [0,0,5,2,2,2,0,0,0],
+        [0,5,2,1,1,1,2,0,0],
+        [0,2,1,1,1,1,1,2,0],
+        [0,2,6,2,1,2,6,2,0],
+        [0,2,1,1,1,1,1,2,0],
+        [0,0,2,3,4,3,2,0,0],
+        [0,2,3,3,3,3,3,2,0],
+        [2,3,3,3,3,3,3,3,2],
+        [0,2,3,3,3,3,3,2,0],
+        [0,0,3,1,3,1,3,0,0],   // stride: legs crossing
+        [0,0,8,8,0,1,0,0,0],   // left leg forward
+        [0,0,0,1,0,8,8,0,0],   // right leg back
+        [0,0,8,0,0,0,8,0,0],   // boot tips
+    ],
+];
+
 // ---------------------------------------------------------------
 // Draw player (centered at cx, cy, rotated by angle)
 // ---------------------------------------------------------------
@@ -280,13 +329,15 @@ function drawPlayer(ctx, cx, cy, angle, frameIndex) {
 function drawEnemy(ctx, cx, cy, angle, frameIndex, type) {
     const ps = PIXEL;
 
-    const frames  = type === 'basic' ? ENEMY_FRAMES_BASIC
-                  : type === 'fast'  ? ENEMY_FRAMES_FAST
-                  :                    ENEMY_FRAMES_TANK;
+    const frames  = type === 'basic'  ? ENEMY_FRAMES_BASIC
+                  : type === 'fast'   ? ENEMY_FRAMES_FAST
+                  : type === 'sniper' ? ENEMY_FRAMES_SNIPER
+                  :                     ENEMY_FRAMES_TANK;
 
-    const palette = type === 'basic' ? PALETTE_ENEMY_BASIC
-                  : type === 'fast'  ? PALETTE_ENEMY_FAST
-                  :                    PALETTE_ENEMY_TANK;
+    const palette = type === 'basic'  ? PALETTE_ENEMY_BASIC
+                  : type === 'fast'   ? PALETTE_ENEMY_FAST
+                  : type === 'sniper' ? PALETTE_ENEMY_SNIPER
+                  :                     PALETTE_ENEMY_TANK;
 
     const frame = frames[frameIndex % frames.length];
     const w = frame[0].length * ps;
@@ -298,6 +349,19 @@ function drawEnemy(ctx, cx, cy, angle, frameIndex, type) {
 
     // Tank is already wide/tall via larger frame; small boost keeps her imposing
     if (type === 'tank') ctx.scale(1.2, 1.2);
+
+    // Sniper rifle — drawn before sprite so it sits behind the body
+    if (type === 'sniper') {
+        // Stock / body (dark)
+        ctx.fillStyle = PALETTE_ENEMY_SNIPER[8];
+        ctx.fillRect(-ps, -h / 2 - ps * 5, ps, ps * 5);
+        // Barrel tip (silver)
+        ctx.fillStyle = PALETTE_ENEMY_SNIPER[7];
+        ctx.fillRect(-ps, -h / 2 - ps * 5, ps, ps * 2);
+        // Scope (amber dot)
+        ctx.fillStyle = PALETTE_ENEMY_SNIPER[6];
+        ctx.fillRect(-ps, -h / 2 - ps * 3, ps, ps);
+    }
 
     drawSprite(ctx, frame, -w / 2, -h / 2, ps, palette);
 
@@ -433,11 +497,15 @@ function drawMeleeSwing(ctx, cx, cy, angle, progress, range) {
 
 // ---------------------------------------------------------------
 // Draw bullet (cx, cy)
+// bulletColor / glowColor override the defaults for enemy bullets
 // ---------------------------------------------------------------
-function drawBullet(ctx, cx, cy, trailPoints) {
+function drawBullet(ctx, cx, cy, trailPoints, bulletColor, glowColor) {
+    const bColor = bulletColor || COLORS.BULLET;
+    const gColor = glowColor   || COLORS.BULLET_GLOW;
+
     // Trail
     if (trailPoints && trailPoints.length > 1) {
-        ctx.strokeStyle = COLORS.BULLET_GLOW;
+        ctx.strokeStyle = gColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(trailPoints[0].x, trailPoints[0].y);
@@ -448,9 +516,9 @@ function drawBullet(ctx, cx, cy, trailPoints) {
     }
 
     // Glow
-    ctx.shadowColor = COLORS.BULLET;
+    ctx.shadowColor = bColor;
     ctx.shadowBlur  = 8;
-    ctx.fillStyle   = COLORS.BULLET;
+    ctx.fillStyle   = bColor;
     ctx.beginPath();
     ctx.arc(cx, cy, BULLET_RADIUS, 0, Math.PI * 2);
     ctx.fill();

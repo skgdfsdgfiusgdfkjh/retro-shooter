@@ -14,28 +14,28 @@ const LEVELS = [
         name: 'Level 2',
         waves: [
             { count: 10, types: ['basic', 'fast'] },
-            { count: 12, types: ['fast'] },
+            { count: 8,  types: ['fast', 'sniper'] },
         ]
     },
     {
         name: 'Level 3',
         waves: [
-            { count: 6,  types: ['basic', 'tank'] },
+            { count: 8,  types: ['basic', 'sniper'] },
             { count: 10, types: ['basic', 'fast', 'tank'] },
         ]
     },
     {
         name: 'Level 4',
         waves: [
-            { count: 15, types: ['fast', 'tank'] },
-            { count: 15, types: ['basic', 'fast', 'tank'] },
+            { count: 15, types: ['fast', 'tank', 'sniper'] },
+            { count: 15, types: ['basic', 'fast', 'tank', 'sniper'] },
         ]
     },
     {
         name: 'Level 5 — BOSS RUSH',
         waves: [
-            { count: 20, types: ['fast', 'tank'] },
-            { count: 25, types: ['basic', 'fast', 'tank'] },
+            { count: 20, types: ['fast', 'tank', 'sniper'] },
+            { count: 25, types: ['basic', 'fast', 'tank', 'sniper'] },
         ]
     },
 ];

@@ -24,9 +24,13 @@ class Enemy {
         this.angle   = 0;   // facing direction
         this.anim    = new Animator(2, 6);
 
-        // Zigzag state for 'fast' type
+        // Zigzag / strafe state (fast + sniper)
         this.zigzagTimer = 0;
         this.zigzagDir   = (Math.random() < 0.5) ? 1 : -1;
+
+        // Ranged attack (sniper only)
+        this.shootTimer    = Math.random() * SNIPER_SHOOT_RATE; // stagger first shot
+        this.pendingBullet = null;
 
         // Knockback
         this.kbVx = 0;
@@ -76,6 +80,42 @@ class Enemy {
             const perp      = moveAngle + Math.PI / 2;
             moveX += Math.cos(perp) * this.speed * 0.6 * this.zigzagDir;
             moveY += Math.sin(perp) * this.speed * 0.6 * this.zigzagDir;
+        }
+
+        // Sniper: keep distance + shoot
+        if (this.type === 'sniper') {
+            this.pendingBullet = null;
+
+            if (dist < SNIPER_FLEE_RANGE) {
+                // Too close — retreat directly away from player
+                moveX = -(dx / dist) * this.speed;
+                moveY = -(dy / dist) * this.speed;
+            } else if (dist <= SNIPER_SHOOT_RANGE) {
+                // In range — strafe sideways slowly instead of charging
+                this.zigzagTimer += dt;
+                if (this.zigzagTimer > 1.2) {
+                    this.zigzagTimer = 0;
+                    this.zigzagDir  *= -1;
+                }
+                const perp = this.angle + Math.PI / 2;
+                moveX = Math.cos(perp) * this.speed * 0.3 * this.zigzagDir;
+                moveY = Math.sin(perp) * this.speed * 0.3 * this.zigzagDir;
+            }
+            // Beyond shoot range: keep the flow-field approach direction unchanged
+
+            // Shooting
+            this.shootTimer -= dt;
+            if (this.shootTimer <= 0 && dist < SNIPER_SHOOT_RANGE) {
+                this.shootTimer = SNIPER_SHOOT_RATE;
+                const gunLen = this.radius + PIXEL * 5;
+                const bx     = this.x + Math.cos(this.angle) * gunLen;
+                const by     = this.y + Math.sin(this.angle) * gunLen;
+                this.pendingBullet = new Bullet(
+                    bx, by, this.angle,
+                    ENEMY_BULLET_DAMAGE, ENEMY_BULLET_SPEED,
+                    '#ff6600', '#aa3300'
+                );
+            }
         }
 
         this.x += moveX * dt;

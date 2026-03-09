@@ -14,11 +14,12 @@ let gameState = 'MENU';
 
 // ---- Game object (live session data) ----
 const game = {
-    player:    null,
-    enemies:   [],
-    bullets:   [],
-    particles: [],
-    powerups:  [],
+    player:       null,
+    enemies:      [],
+    bullets:      [],
+    enemyBullets: [],
+    particles:    [],
+    powerups:     [],
     camera:    { x: 0, y: 0 },
     spawner:   new Spawner(),
     levelIndex: 0,
@@ -32,10 +33,11 @@ function startLevel(levelIndex) {
     const level = LEVELS[levelIndex];
     game.levelIndex = levelIndex;
     game.waveIndex  = 0;
-    game.enemies    = [];
-    game.bullets    = [];
-    game.particles  = [];
-    game.powerups   = [];
+    game.enemies      = [];
+    game.bullets      = [];
+    game.enemyBullets = [];
+    game.particles    = [];
+    game.powerups     = [];
     game.spawner.reset();
 
     if (!game.player) {
@@ -66,9 +68,10 @@ function startNewGame() {
 function startWave(waveIdx) {
     const level = LEVELS[game.levelIndex];
     game.waveIndex = waveIdx;
-    game.enemies   = [];
-    game.bullets   = [];
-    game.powerups  = [];
+    game.enemies      = [];
+    game.bullets      = [];
+    game.enemyBullets = [];
+    game.powerups     = [];
     game.spawner.reset();
     game.spawner.loadWave(level.waves[waveIdx], game.camera.x, game.camera.y);
 
@@ -210,11 +213,30 @@ function updatePlaying(dt, mx, my) {
     // Refresh flow field (no-op if player hasn't moved to a new tile)
     updateFlowField(p.x, p.y);
 
-    // Update enemies
+    // Update enemies — collect any shots fired this frame
     game.enemies.forEach(e => {
         e.update(dt, p.x, p.y);
         resolveTerrainCollision(e);
+        if (e.pendingBullet) {
+            game.enemyBullets.push(e.pendingBullet);
+            // Muzzle flash at shot origin
+            spawnMuzzleFlash(e.pendingBullet.x, e.pendingBullet.y, e.angle)
+                .forEach(part => game.particles.push(part));
+            e.pendingBullet = null;
+        }
     });
+
+    // Update enemy bullets — kill those that hit walls
+    game.enemyBullets.forEach(b => b.update(dt));
+    game.enemyBullets.forEach(b => {
+        if (b.dead) return;
+        if (isTileSolid(Math.floor(b.x / GRID_SIZE), Math.floor(b.y / GRID_SIZE))) {
+            b.dead = true;
+            spawnDeathParticles(b.x, b.y, '#aa4400', 3)
+                .forEach(part => game.particles.push(part));
+        }
+    });
+    game.enemyBullets = game.enemyBullets.filter(b => !b.dead);
 
     // Update particles
     game.particles.forEach(part => part.update(dt));
@@ -243,11 +265,15 @@ function updatePlaying(dt, mx, my) {
     }
     game.powerups = game.powerups.filter(pu => !pu.dead);
 
-    // Collisions
+    // Collisions — player bullets vs enemies, enemies vs player
     const { screenFlash } = processCollisions(
         game.bullets, game.enemies, p, game.particles, ScoreSystem
     );
-    if (screenFlash) game.screenFlash = 0.25;
+    // Enemy bullets vs player
+    const { screenFlash: ebFlash } = processEnemyBulletCollisions(
+        game.enemyBullets, p, game.particles
+    );
+    if (screenFlash || ebFlash) game.screenFlash = 0.25;
     if (game.screenFlash > 0) game.screenFlash -= dt;
 
     // Remove dead enemies
@@ -313,7 +339,8 @@ function renderPlaying() {
     // Particles (behind enemies)
     game.particles.forEach(p => p.draw(ctx, cam.x, cam.y));
 
-    // Bullets
+    // Bullets (player = cyan, enemy = orange)
+    game.enemyBullets.forEach(b => b.draw(ctx, cam.x, cam.y));
     game.bullets.forEach(b => b.draw(ctx, cam.x, cam.y));
 
     // Enemies

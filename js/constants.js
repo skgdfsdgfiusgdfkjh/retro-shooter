@@ -53,10 +53,20 @@ const BULLET_DAMAGE   = 15;
 // Enemy settings
 // Colors here are used for death particles and health bars; match character palettes
 const ENEMY_CONFIGS = {
-    basic: { color: '#cc1133', speed: 80,  hp: 30,  score: 10, radius: 14, damage: 10 }, // Akane — red uniform
-    fast:  { color: '#ffcc00', speed: 160, hp: 15,  score: 20, radius: 10, damage: 8  }, // Kaze  — yellow suit
-    tank:  { color: '#8833cc', speed: 40,  hp: 120, score: 50, radius: 22, damage: 20 }, // Yami  — purple robes (radius bumped for wider sprite)
+    basic:  { color: '#cc1133', speed: 80,  hp: 30,  score: 10, radius: 14, damage: 10 }, // Akane — red uniform
+    fast:   { color: '#ffcc00', speed: 160, hp: 15,  score: 20, radius: 10, damage: 8  }, // Kaze  — yellow suit
+    tank:   { color: '#8833cc', speed: 40,  hp: 120, score: 50, radius: 22, damage: 20 }, // Yami  — purple robes
+    sniper: { color: '#4466bb', speed: 70,  hp: 45,  score: 35, radius: 13, damage: 5  }, // Hana  — blue uniform
 };
+
+// Sniper enemy behaviour
+const SNIPER_SHOOT_RATE  = 2.0;  // seconds between shots
+const SNIPER_SHOOT_RANGE = 310;  // px — fires when player is within this distance
+const SNIPER_FLEE_RANGE  = 90;   // px — retreats when player gets this close
+
+// Enemy bullet settings
+const ENEMY_BULLET_SPEED  = 380;
+const ENEMY_BULLET_DAMAGE = 12;
 
 // Spawner settings
 const SPAWN_INTERVAL     = 0.8;  // seconds between individual enemy spawns
