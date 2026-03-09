@@ -13,6 +13,48 @@ function circleCollide(a, b) {
 }
 
 /**
+ * Apply melee damage to all enemies within the player's swing arc.
+ * Call this once at the moment the swing is triggered (not each frame).
+ *
+ * @param {Player}     player
+ * @param {Enemy[]}    enemies
+ * @param {Particle[]} particles
+ * @param {ScoreSystem} score
+ */
+function processMeleeHits(player, enemies, particles, score) {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        const enemy = enemies[i];
+        if (enemy.dead) continue;
+
+        const dx   = enemy.x - player.x;
+        const dy   = enemy.y - player.y;
+        const dist = Math.hypot(dx, dy);
+
+        // Must be within reach (allow for enemy radius)
+        if (dist > MELEE_RANGE + enemy.radius) continue;
+
+        // Must be inside the swing arc
+        let angleDiff = Math.atan2(dy, dx) - player.meleeAngle;
+        while (angleDiff >  Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+        if (Math.abs(angleDiff) > MELEE_ARC + 0.2) continue;
+
+        enemy.takeDamage(MELEE_DAMAGE);
+
+        // Strong knockback away from player
+        enemy.applyKnockback(dx, dy, 500);
+
+        // Sparks
+        const color = enemy.dead ? enemy.color : '#ffffaa';
+        const count = enemy.dead ? 10 : 5;
+        spawnDeathParticles(enemy.x, enemy.y, color, count)
+            .forEach(p => particles.push(p));
+
+        if (enemy.dead && score) score.add(enemy.score);
+    }
+}
+
+/**
  * Process all bullet↔enemy and enemy↔player collisions.
  *
  * @param {Bullet[]}   bullets

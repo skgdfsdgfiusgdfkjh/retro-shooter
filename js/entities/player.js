@@ -37,6 +37,11 @@ class Player {
         // Active powerup boosts
         this.speedBoost    = { active: false, timer: 0 };
         this.strengthBoost = { active: false, timer: 0 };
+
+        // Melee attack
+        this.meleeCooldown = 0;
+        this.meleeTimer    = 0;  // > 0 while swing animation is playing
+        this.meleeAngle    = 0;  // facing angle at time of swing
     }
 
     // -------------------------------------------------------
@@ -105,6 +110,10 @@ class Player {
             if (this.strengthBoost.timer <= 0) this.strengthBoost.active = false;
         }
 
+        // ---- Melee timers ----
+        if (this.meleeCooldown > 0) this.meleeCooldown -= dt;
+        if (this.meleeTimer    > 0) this.meleeTimer    -= dt;
+
         // ---- Timers ----
         if (this.hitFlashTimer   > 0) this.hitFlashTimer   -= dt;
         if (this.damageCooldown  > 0) this.damageCooldown  -= dt;
@@ -139,6 +148,18 @@ class Player {
     }
 
     // -------------------------------------------------------
+    // Trigger melee swing; returns true if swing started
+    // -------------------------------------------------------
+    tryMelee() {
+        if (!Input.mouse.rightClicked) return false;
+        if (this.meleeCooldown > 0)    return false;
+        this.meleeCooldown = MELEE_COOLDOWN;
+        this.meleeTimer    = MELEE_DURATION;
+        this.meleeAngle    = this.angle;
+        return true;
+    }
+
+    // -------------------------------------------------------
     // Take damage (with cooldown to avoid rapid hits)
     // -------------------------------------------------------
     takeDamage(amount) {
@@ -159,5 +180,10 @@ class Player {
         const sx = CANVAS_WIDTH  / 2;
         const sy = CANVAS_HEIGHT / 2;
         drawPlayer(ctx, sx, sy, this.angle, this.anim.frame);
+        // Melee swing arc drawn on top of the player sprite
+        if (this.meleeTimer > 0) {
+            const progress = 1 - (this.meleeTimer / MELEE_DURATION);
+            drawMeleeSwing(ctx, sx, sy, this.meleeAngle, progress, MELEE_RANGE);
+        }
     }
 }

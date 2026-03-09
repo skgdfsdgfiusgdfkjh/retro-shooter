@@ -78,6 +78,13 @@ const POWERUP_SPEED_MULTIPLIER  = 3.5;  // fire-rate multiplier (shoot cooldown 
 const POWERUP_DAMAGE_MULTIPLIER = 2.5;  // bullet damage multiplier
 const HEALTH_PACK_RESTORE       = 35;   // HP restored by a health pack
 
+// Melee attack
+const MELEE_RANGE    = 90;              // px — reach of the sword arc
+const MELEE_DAMAGE   = 40;             // damage per enemy hit
+const MELEE_COOLDOWN = 0.55;           // seconds between swings
+const MELEE_DURATION = 0.22;           // seconds for the swing animation
+const MELEE_ARC      = Math.PI * 0.7; // half-arc (±126° total sweep)
+
 // HUD
 const HUD_FONT       = '"Press Start 2P", monospace';
 const HUD_FONT_SMALL = '10px ' + HUD_FONT;

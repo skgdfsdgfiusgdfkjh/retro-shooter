@@ -186,6 +186,11 @@ function updatePlaying(dt, mx, my) {
             .forEach(part => game.particles.push(part));
     }
 
+    // Melee swing
+    if (p.tryMelee()) {
+        processMeleeHits(p, game.enemies, game.particles, ScoreSystem);
+    }
+
     // Update camera
     updateCamera();
 

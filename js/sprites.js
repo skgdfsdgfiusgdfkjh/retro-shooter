@@ -383,6 +383,55 @@ function drawPowerup(ctx, cx, cy, type, pulseTimer) {
 }
 
 // ---------------------------------------------------------------
+// Draw melee sword-swing arc (centered on cx, cy, player-space)
+// progress 0→1 over the swing duration
+// ---------------------------------------------------------------
+function drawMeleeSwing(ctx, cx, cy, angle, progress, range) {
+    const startAng = angle - MELEE_ARC;
+    const sweepEnd = startAng + MELEE_ARC * 2 * progress; // leading edge
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // Swept sector — faint fill
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, range, startAng, sweepEnd);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,180,0.07)';
+    ctx.fill();
+
+    // Outer arc trail
+    ctx.beginPath();
+    ctx.arc(0, 0, range, startAng, sweepEnd);
+    ctx.strokeStyle = 'rgba(255,255,160,0.45)';
+    ctx.lineWidth   = 5;
+    ctx.stroke();
+
+    // Leading blade line (bright, glowing)
+    const bx = Math.cos(sweepEnd) * range;
+    const by = Math.sin(sweepEnd) * range;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(bx, by);
+    ctx.strokeStyle = '#ffffcc';
+    ctx.lineWidth   = 2.5;
+    ctx.shadowColor = '#ffffaa';
+    ctx.shadowBlur  = 16;
+    ctx.stroke();
+
+    // Bright tip spark
+    ctx.beginPath();
+    ctx.arc(bx, by, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 20;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
+// ---------------------------------------------------------------
 // Draw bullet (cx, cy)
 // ---------------------------------------------------------------
 function drawBullet(ctx, cx, cy, trailPoints) {

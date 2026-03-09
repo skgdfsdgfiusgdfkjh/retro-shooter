@@ -4,7 +4,7 @@
 
 const Input = (() => {
     const keys   = {};
-    const mouse  = { x: 0, y: 0, down: false, clicked: false };
+    const mouse  = { x: 0, y: 0, down: false, clicked: false, rightClicked: false };
 
     window.addEventListener('keydown', e => {
         keys[e.code] = true;
@@ -30,18 +30,24 @@ const Input = (() => {
             mouse.down    = true;
             mouse.clicked = true;
         }
+        if (e.button === 2) {
+            mouse.rightClicked = true;
+        }
     });
 
     window.addEventListener('mouseup', e => {
         if (e.button === 0) mouse.down = false;
     });
 
+    window.addEventListener('contextmenu', e => e.preventDefault());
+
     return {
         keys,
         mouse,
         /** Call once per frame after processing to clear single-frame flags */
         flush() {
-            mouse.clicked = false;
+            mouse.clicked      = false;
+            mouse.rightClicked = false;
         },
         isDown(code)    { return !!keys[code]; },
         isPressed(code) { return !!keys[code]; },
