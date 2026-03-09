@@ -6,6 +6,43 @@ const HUD = {
     draw(ctx, player, score, levelName, waveIndex, waveTotal) {
         ctx.save();
 
+        // ---- Active powerup boost bars (bottom-right) ----
+        const boosts = [
+            { label: 'SPEED',  color: POWERUP_COLORS.speed,    boost: player.speedBoost,    dur: POWERUP_DURATION_SPEED    },
+            { label: 'POWER',  color: POWERUP_COLORS.strength,  boost: player.strengthBoost, dur: POWERUP_DURATION_STRENGTH },
+        ];
+        let boostY = CANVAS_HEIGHT - 16;
+        for (const b of boosts) {
+            if (!b.boost.active) continue;
+            const bw  = 140, bh = 14;
+            const bx  = CANVAS_WIDTH - 16 - bw;
+            const pct = b.boost.timer / b.dur;
+
+            // Background
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(bx - 2, boostY - bh - 2, bw + 4, bh + 4);
+
+            // Fill bar
+            ctx.fillStyle = b.color;
+            ctx.shadowColor = b.color;
+            ctx.shadowBlur  = 6;
+            ctx.fillRect(bx, boostY - bh, bw * pct, bh);
+            ctx.shadowBlur = 0;
+
+            // Border
+            ctx.strokeStyle = b.color;
+            ctx.lineWidth   = 1;
+            ctx.strokeRect(bx, boostY - bh, bw, bh);
+
+            // Label
+            ctx.fillStyle = b.color;
+            ctx.font      = HUD_FONT_SMALL;
+            ctx.textAlign = 'right';
+            ctx.fillText(b.label, bx - 6, boostY - 2);
+
+            boostY -= bh + 10;
+        }
+
         // ---- Health Bar (top-left) ----
         const hbx = 16, hby = 16, hbw = 200, hbh = 18;
         ctx.fillStyle = COLORS.HUD_BG;

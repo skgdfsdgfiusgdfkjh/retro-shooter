@@ -18,6 +18,7 @@ const game = {
     enemies:   [],
     bullets:   [],
     particles: [],
+    powerups:  [],
     camera:    { x: 0, y: 0 },
     spawner:   new Spawner(),
     levelIndex: 0,
@@ -33,6 +34,7 @@ function startLevel(levelIndex) {
     game.enemies    = [];
     game.bullets    = [];
     game.particles  = [];
+    game.powerups   = [];
     game.spawner.reset();
 
     if (!game.player) {
@@ -67,6 +69,57 @@ function startWave(waveIdx) {
     game.bullets   = [];
     game.spawner.reset();
     game.spawner.loadWave(level.waves[waveIdx], game.camera.x, game.camera.y);
+    spawnWavePowerups();
+}
+
+// ---- Powerup spawning ----
+function spawnWavePowerups() {
+    game.powerups = [];
+    const camX = game.camera.x;
+    const camY = game.camera.y;
+
+    // Always drop one random combat powerup (speed or strength)
+    const combatTypes = ['speed', 'strength'];
+    const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
+    game.powerups.push(new Powerup(pick, _randomPowerupPos(camX, camY)));
+
+    // 55% chance of a second combat powerup
+    if (Math.random() < 0.55) {
+        const pick2 = combatTypes[Math.floor(Math.random() * combatTypes.length)];
+        game.powerups.push(new Powerup(pick2, _randomPowerupPos(camX, camY)));
+    }
+
+    // 65% chance of a health pack
+    if (Math.random() < 0.65) {
+        const pos = _randomPowerupPos(camX, camY);
+        game.powerups.push(new Powerup('health', pos));
+    }
+}
+
+function _randomPowerupPos(camX, camY) {
+    const margin = 100;
+    const x = camX + margin + Math.random() * (CANVAS_WIDTH  - margin * 2);
+    const y = camY + margin + Math.random() * (CANVAS_HEIGHT - margin * 2);
+    return {
+        x: Math.max(60, Math.min(WORLD_WIDTH  - 60, x)),
+        y: Math.max(60, Math.min(WORLD_HEIGHT - 60, y)),
+    };
+}
+
+function applyPowerup(type, player) {
+    switch (type) {
+        case 'speed':
+            player.speedBoost.active = true;
+            player.speedBoost.timer  = POWERUP_DURATION_SPEED;
+            break;
+        case 'strength':
+            player.strengthBoost.active = true;
+            player.strengthBoost.timer  = POWERUP_DURATION_STRENGTH;
+            break;
+        case 'health':
+            player.hp = Math.min(player.maxHp, player.hp + HEALTH_PACK_RESTORE);
+            break;
+    }
 }
 
 function updateCamera() {
@@ -167,6 +220,16 @@ function updatePlaying(dt, mx, my) {
     // Update spawner
     game.spawner.update(dt, game.enemies, game.camera.x, game.camera.y);
 
+    // Update powerups + check player pickup
+    game.powerups.forEach(pu => pu.update(dt));
+    for (const pu of game.powerups) {
+        if (pu.pickedUp) continue;
+        if (circleCollide(pu, p)) {
+            if (pu.collect()) applyPowerup(pu.type, p);
+        }
+    }
+    game.powerups = game.powerups.filter(pu => !pu.dead);
+
     // Collisions
     const { screenFlash } = processCollisions(
         game.bullets, game.enemies, p, game.particles, ScoreSystem
@@ -230,6 +293,9 @@ function renderPlaying() {
 
     // Background grid
     drawBackground(ctx, cam.x, cam.y, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Powerups (on the ground, under everything else)
+    game.powerups.forEach(pu => pu.draw(ctx, cam.x, cam.y));
 
     // Particles (behind enemies)
     game.particles.forEach(p => p.draw(ctx, cam.x, cam.y));

@@ -305,6 +305,84 @@ function drawEnemy(ctx, cx, cy, angle, frameIndex, type) {
 }
 
 // ---------------------------------------------------------------
+// Powerup icons  (5×5 pixel art, 1 = filled)
+// ---------------------------------------------------------------
+const POWERUP_ICON_SPEED = [     // lightning bolt
+    [0,0,1,1,0],
+    [0,1,1,0,0],
+    [1,1,1,1,0],
+    [0,0,1,1,0],
+    [0,0,1,0,0],
+];
+const POWERUP_ICON_STRENGTH = [  // 8-pointed star burst
+    [1,0,1,0,1],
+    [0,1,1,1,0],
+    [1,1,1,1,1],
+    [0,1,1,1,0],
+    [1,0,1,0,1],
+];
+const POWERUP_ICON_HEALTH = [    // plus / cross
+    [0,0,1,0,0],
+    [0,1,1,1,0],
+    [1,1,1,1,1],
+    [0,1,1,1,0],
+    [0,0,1,0,0],
+];
+
+/**
+ * Draw a powerup pickup at screen position (cx, cy).
+ * @param {number} pulseTimer  — continuously incrementing timer for the pulse animation
+ */
+function drawPowerup(ctx, cx, cy, type, pulseTimer) {
+    const color   = POWERUP_COLORS[type];
+    const boxSize = 28;
+    const pulse   = 1 + Math.sin(pulseTimer * 3) * 0.08;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(pulse, pulse);
+
+    // Outer glow
+    ctx.shadowColor = color;
+    ctx.shadowBlur  = 14;
+
+    // Dark background box
+    ctx.fillStyle   = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(-boxSize / 2, -boxSize / 2, boxSize, boxSize);
+
+    // Colored border
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(-boxSize / 2, -boxSize / 2, boxSize, boxSize);
+
+    // Corner accent dots
+    const h = boxSize / 2;
+    ctx.fillStyle = color;
+    [[-h,-h],[h-2,-h],[-h,h-2],[h-2,h-2]].forEach(([dx, dy]) => {
+        ctx.fillRect(dx, dy, 2, 2);
+    });
+
+    // Pixel icon centered
+    const icon = type === 'speed'    ? POWERUP_ICON_SPEED
+               : type === 'strength' ? POWERUP_ICON_STRENGTH
+               :                       POWERUP_ICON_HEALTH;
+    const ps = 4;
+    const iw = icon[0].length * ps;
+    const ih = icon.length    * ps;
+    ctx.fillStyle = color;
+    for (let row = 0; row < icon.length; row++) {
+        for (let col = 0; col < icon[row].length; col++) {
+            if (icon[row][col] === 1) {
+                ctx.fillRect(-iw / 2 + col * ps, -ih / 2 + row * ps, ps, ps);
+            }
+        }
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
+// ---------------------------------------------------------------
 // Draw bullet (cx, cy)
 // ---------------------------------------------------------------
 function drawBullet(ctx, cx, cy, trailPoints) {

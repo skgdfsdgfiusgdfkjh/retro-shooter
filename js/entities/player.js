@@ -33,6 +33,10 @@ class Player {
         // Shoot cooldown (semi-auto feel)
         this.shootCooldown = 0;
         this.SHOOT_RATE    = 0.12; // seconds between shots (auto-fire)
+
+        // Active powerup boosts
+        this.speedBoost    = { active: false, timer: 0 };
+        this.strengthBoost = { active: false, timer: 0 };
     }
 
     // -------------------------------------------------------
@@ -91,6 +95,16 @@ class Player {
         // ---- Shoot cooldown ----
         if (this.shootCooldown > 0) this.shootCooldown -= dt;
 
+        // ---- Powerup boost timers ----
+        if (this.speedBoost.active) {
+            this.speedBoost.timer -= dt;
+            if (this.speedBoost.timer <= 0) this.speedBoost.active = false;
+        }
+        if (this.strengthBoost.active) {
+            this.strengthBoost.timer -= dt;
+            if (this.strengthBoost.timer <= 0) this.strengthBoost.active = false;
+        }
+
         // ---- Timers ----
         if (this.hitFlashTimer   > 0) this.hitFlashTimer   -= dt;
         if (this.damageCooldown  > 0) this.damageCooldown  -= dt;
@@ -106,14 +120,22 @@ class Player {
         if (!Input.mouse.down)        return null;
 
         this.ammo--;
-        this.shootCooldown = this.SHOOT_RATE;
+        // Speed boost: fire ~3.5× faster
+        this.shootCooldown = this.speedBoost.active
+            ? this.SHOOT_RATE / POWERUP_SPEED_MULTIPLIER
+            : this.SHOOT_RATE;
+
+        // Strength boost: bullets deal more damage
+        const damage = this.strengthBoost.active
+            ? Math.round(BULLET_DAMAGE * POWERUP_DAMAGE_MULTIPLIER)
+            : BULLET_DAMAGE;
 
         // Gun tip position in world coords
         const gunLen = PIXEL * 5;
         const gx = this.x + Math.cos(this.angle) * gunLen;
         const gy = this.y + Math.sin(this.angle) * gunLen;
 
-        return new Bullet(gx, gy, this.angle);
+        return new Bullet(gx, gy, this.angle, damage);
     }
 
     // -------------------------------------------------------

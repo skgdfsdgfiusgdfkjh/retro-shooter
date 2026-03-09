@@ -8,13 +8,13 @@ class Bullet {
      * @param {number} y        world y
      * @param {number} angle    direction in radians
      */
-    constructor(x, y, angle) {
+    constructor(x, y, angle, damage = BULLET_DAMAGE) {
         this.x      = x;
         this.y      = y;
         this.vx     = Math.cos(angle) * BULLET_SPEED;
         this.vy     = Math.sin(angle) * BULLET_SPEED;
         this.radius = BULLET_RADIUS;
-        this.damage = BULLET_DAMAGE;
+        this.damage = damage;
         this.life   = BULLET_LIFETIME;
         this.dead   = false;
 

@@ -66,6 +66,18 @@ const SPAWN_EDGE_PADDING = 60;   // px from world edge
 // Grid cell size for background
 const GRID_SIZE = 32;
 
+// Powerup settings
+const POWERUP_COLORS = {
+    speed:    '#00ffff',  // cyan
+    strength: '#ff8800',  // orange
+    health:   '#44ff88',  // green
+};
+const POWERUP_DURATION_SPEED    = 8;    // seconds
+const POWERUP_DURATION_STRENGTH = 8;    // seconds
+const POWERUP_SPEED_MULTIPLIER  = 3.5;  // fire-rate multiplier (shoot cooldown ÷ this)
+const POWERUP_DAMAGE_MULTIPLIER = 2.5;  // bullet damage multiplier
+const HEALTH_PACK_RESTORE       = 35;   // HP restored by a health pack
+
 // HUD
 const HUD_FONT       = '"Press Start 2P", monospace';
 const HUD_FONT_SMALL = '10px ' + HUD_FONT;
