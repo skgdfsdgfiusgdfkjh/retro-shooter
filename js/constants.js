@@ -51,10 +51,11 @@ const BULLET_RADIUS   = 4;
 const BULLET_DAMAGE   = 15;
 
 // Enemy settings
+// Colors here are used for death particles and health bars; match character palettes
 const ENEMY_CONFIGS = {
-    basic: { color: COLORS.ENEMY_BASIC, speed: 80,  hp: 30,  score: 10, radius: 14, damage: 10 },
-    fast:  { color: COLORS.ENEMY_FAST,  speed: 160, hp: 15,  score: 20, radius: 10, damage: 8  },
-    tank:  { color: COLORS.ENEMY_TANK,  speed: 40,  hp: 120, score: 50, radius: 20, damage: 20 },
+    basic: { color: '#cc1133', speed: 80,  hp: 30,  score: 10, radius: 14, damage: 10 }, // Akane — red uniform
+    fast:  { color: '#ffcc00', speed: 160, hp: 15,  score: 20, radius: 10, damage: 8  }, // Kaze  — yellow suit
+    tank:  { color: '#8833cc', speed: 40,  hp: 120, score: 50, radius: 22, damage: 20 }, // Yami  — purple robes (radius bumped for wider sprite)
 };
 
 // Spawner settings

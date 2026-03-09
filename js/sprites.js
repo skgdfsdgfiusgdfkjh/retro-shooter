@@ -35,31 +35,41 @@ const PALETTE_PLAYER = [
     '#cccccc',      // 6 gun light
 ];
 
+// Basic — red schoolgirl "Akane": twin-tails, sailor uniform, huge eyes, A-line skirt
 const PALETTE_ENEMY_BASIC = [
     null,
-    '#ff2222',      // 1 body
-    '#aa0000',      // 2 dark
-    '#ff6666',      // 3 highlight
-    '#ffffff',      // 4 eye
-    '#000000',      // 5 pupil
+    '#ffd0a8',      // 1 skin
+    '#331100',      // 2 dark outline
+    '#cc1133',      // 3 red uniform
+    '#ffffff',      // 4 white (bow, socks)
+    '#aa1122',      // 5 dark-red hair
+    '#88ccff',      // 6 blue eyes
+    '#222222',      // 7 dark shoes
 ];
 
+// Fast — yellow ninja girl "Kaze": sleek suit, red headband, absurdly long legs, ponytail
 const PALETTE_ENEMY_FAST = [
     null,
-    '#ffdd00',      // 1 body
-    '#aa8800',      // 2 dark
-    '#ffff66',      // 3 highlight
-    '#ffffff',      // 4 eye
-    '#000000',      // 5 pupil
+    '#ffd0a8',      // 1 skin
+    '#111122',      // 2 dark outline
+    '#ffcc00',      // 3 yellow suit
+    '#ff8800',      // 4 orange accent
+    '#111133',      // 5 dark blue-black hair
+    '#ff2244',      // 6 red headband
+    '#ffffff',      // 7 white highlights
 ];
 
+// Tank — purple dark-mage "Yami": enormous silver hair, wide hips, voluminous robes, gold eyes
 const PALETTE_ENEMY_TANK = [
     null,
-    '#bb44ff',      // 1 body
-    '#660099',      // 2 dark
-    '#dd88ff',      // 3 highlight
-    '#ffffff',      // 4 eye
-    '#000000',      // 5 pupil
+    '#ffd0a8',      // 1 skin
+    '#220033',      // 2 dark-purple outline
+    '#8833cc',      // 3 purple robes
+    '#cc77ff',      // 4 lavender accent
+    '#eeeeff',      // 5 silver-white hair
+    '#ffcc44',      // 6 gold (eyes, trim)
+    '#440088',      // 7 deep purple (waist cinch)
+    '#ff88bb',      // 8 rose lips
 ];
 
 // ---------------------------------------------------------------
@@ -118,28 +128,124 @@ const PLAYER_FRAMES = [
 ];
 
 // ---------------------------------------------------------------
-// Enemy frames — 5×7 pixels
+// Enemy frames — per-type pixel art (9–11 wide × 13–15 tall)
+// Palette key: 0=transparent, others index the type's palette
 // ---------------------------------------------------------------
-const ENEMY_FRAMES = [
-    // Frame 0
+
+// BASIC — red schoolgirl "Akane"  (9×13)
+// Exaggerated: big head, huge eyes, tiny waist, flared A-line skirt
+const ENEMY_FRAMES_BASIC = [
+    // Frame 0 — idle
     [
-        [0,1,1,1,0],
-        [1,1,1,1,1],
-        [1,4,1,4,1],
-        [1,5,1,5,1],
-        [1,1,1,1,1],
-        [2,1,2,1,2],
-        [2,0,2,0,2],
+        [0,5,5,2,2,2,5,5,0],   // twin-tails fan out
+        [5,2,2,1,1,1,2,2,5],   // head framed by hair
+        [5,2,1,1,1,1,1,2,5],   // forehead
+        [0,2,6,2,1,2,6,2,0],   // BIG eyes (6=iris, 2=pupil outline)
+        [0,2,1,1,1,1,1,2,0],   // cheeks / tiny mouth hint
+        [0,0,2,3,4,3,2,0,0],   // sailor collar + white ribbon bow
+        [0,2,3,3,3,3,3,2,0],   // chest (uniform top)
+        [0,2,3,3,3,3,3,2,0],   // waist (same width — tiny)
+        [0,0,3,3,3,3,3,0,0],   // skirt flares wide
+        [0,0,3,3,0,3,3,0,0],   // skirt hem — gap shows legs
+        [0,0,4,1,0,1,4,0,0],   // knee socks (4=white)
+        [0,0,4,1,0,1,4,0,0],   // lower socks
+        [0,0,7,7,0,7,7,0,0],   // mary-jane shoes
     ],
-    // Frame 1 (legs apart)
+    // Frame 1 — walk (legs shifted)
     [
-        [0,1,1,1,0],
-        [1,1,1,1,1],
-        [1,4,1,4,1],
-        [1,5,1,5,1],
-        [1,1,1,1,1],
-        [1,2,1,2,1],
-        [2,0,0,0,2],
+        [0,5,5,2,2,2,5,5,0],
+        [5,2,2,1,1,1,2,2,5],
+        [5,2,1,1,1,1,1,2,5],
+        [0,2,6,2,1,2,6,2,0],
+        [0,2,1,1,1,1,1,2,0],
+        [0,0,2,3,4,3,2,0,0],
+        [0,2,3,3,3,3,3,2,0],
+        [0,2,3,3,3,3,3,2,0],
+        [0,0,3,3,3,3,3,0,0],
+        [0,0,0,3,3,3,0,0,0],   // narrower skirt as stride opens
+        [0,0,4,4,0,1,0,0,0],   // one leg forward
+        [0,0,0,1,0,4,4,0,0],   // other leg back
+        [0,0,7,7,0,0,7,0,0],   // shoes offset
+    ],
+];
+
+// FAST — yellow ninja girl "Kaze"  (9×15)
+// Exaggerated: impossibly long legs, razor-thin waist, wild ponytail, red headband
+const ENEMY_FRAMES_FAST = [
+    // Frame 0 — idle
+    [
+        [0,0,5,5,5,0,5,5,0],   // ponytail flying up-right
+        [0,5,2,1,1,2,0,5,5],   // head + ponytail continues
+        [0,0,6,6,6,6,6,0,0],   // red headband across forehead
+        [0,0,2,1,1,1,2,0,0],   // upper face
+        [0,0,2,7,2,7,2,0,0],   // two big eyes (7=white highlight)
+        [0,0,2,1,1,1,2,0,0],   // lower face / small mouth
+        [0,0,2,3,4,3,2,0,0],   // collar with orange accent
+        [0,2,3,4,3,3,3,2,0],   // chest — accent stripe
+        [0,2,3,3,3,3,3,2,0],   // waist (razor thin)
+        [0,0,2,3,3,3,2,0,0],   // narrow hips
+        [0,0,2,1,0,1,2,0,0],   // upper legs — very long
+        [0,0,2,1,0,1,2,0,0],   // mid legs
+        [0,0,2,1,0,1,2,0,0],   // lower legs
+        [0,0,2,3,0,3,2,0,0],   // yellow boots
+        [0,0,2,2,0,2,2,0,0],   // boot soles
+    ],
+    // Frame 1 — running stride
+    [
+        [0,0,5,5,5,0,5,5,0],
+        [0,5,2,1,1,2,0,5,5],
+        [0,0,6,6,6,6,6,0,0],
+        [0,0,2,1,1,1,2,0,0],
+        [0,0,2,7,2,7,2,0,0],
+        [0,0,2,1,1,1,2,0,0],
+        [0,0,2,3,4,3,2,0,0],
+        [0,2,3,4,3,3,3,2,0],
+        [0,2,3,3,3,3,3,2,0],
+        [0,0,2,3,3,3,2,0,0],
+        [0,0,0,2,1,2,0,0,0],   // legs together mid-stride
+        [0,0,2,1,2,1,0,0,0],   // crossing
+        [0,0,2,1,0,0,2,0,0],   // one leg forward
+        [0,0,2,3,0,0,2,3,0],   // boots spread in stride
+        [0,0,7,2,0,0,2,7,0],   // boot tips
+    ],
+];
+
+// TANK — purple dark-mage "Yami"  (11×14)
+// Exaggerated: massive silver hair wider than body, huge hips, imposing height
+const ENEMY_FRAMES_TANK = [
+    // Frame 0 — idle
+    [
+        [0,5,5,5,2,2,5,5,5,0,0],   // enormous hair — spreads far wider than face
+        [5,5,5,2,1,1,2,5,5,5,0],   // hair walls the face on both sides
+        [5,5,2,1,1,1,1,2,5,5,0],   // wide face framed by silver locks
+        [0,5,2,1,6,1,6,2,5,0,0],   // gold eyes (6=gold) — large and intense
+        [0,5,2,1,1,8,1,2,5,0,0],   // cheeks + rose lips (8=pink)
+        [0,0,2,3,4,4,3,2,0,0,0],   // chest — lavender accent visible
+        [0,2,3,3,3,3,3,3,2,0,0],   // wide chest (8 cols!)
+        [0,2,7,3,3,3,3,7,2,0,0],   // waist cinched by deep-purple corset
+        [2,3,3,3,3,3,3,3,3,2,0],   // MAX-width hips — full 10 cols
+        [0,2,3,3,1,1,3,3,2,0,0],   // upper thighs showing through robe split
+        [0,0,2,3,1,1,3,2,0,0,0],   // thighs
+        [0,0,2,3,1,1,3,2,0,0,0],   // lower legs
+        [0,0,2,3,3,3,3,2,0,0,0],   // robe hem sweeps the floor
+        [0,0,2,2,2,2,2,2,0,0,0],   // feet — barely visible under robes
+    ],
+    // Frame 1 — slow sway
+    [
+        [0,5,5,5,2,2,5,5,5,0,0],
+        [5,5,5,2,1,1,2,5,5,5,0],
+        [5,5,2,1,1,1,1,2,5,5,0],
+        [0,5,2,1,6,1,6,2,5,0,0],
+        [0,5,2,1,1,8,1,2,5,0,0],
+        [0,0,2,3,4,4,3,2,0,0,0],
+        [0,2,3,3,3,3,3,3,2,0,0],
+        [0,2,7,3,3,3,3,7,2,0,0],
+        [2,3,3,3,3,3,3,3,3,2,0],
+        [0,2,3,1,3,1,3,3,2,0,0],   // legs shifted slightly
+        [0,0,2,1,3,1,3,2,0,0,0],
+        [0,0,2,1,1,3,3,2,0,0,0],
+        [0,0,0,2,3,3,2,2,0,0,0],   // robe hem follows motion
+        [0,0,0,2,2,2,2,0,0,0,0],
     ],
 ];
 
@@ -173,20 +279,25 @@ function drawPlayer(ctx, cx, cy, angle, frameIndex) {
 // ---------------------------------------------------------------
 function drawEnemy(ctx, cx, cy, angle, frameIndex, type) {
     const ps = PIXEL;
-    const frame = ENEMY_FRAMES[frameIndex % ENEMY_FRAMES.length];
-    const w = frame[0].length * ps;
-    const h = frame.length    * ps;
+
+    const frames  = type === 'basic' ? ENEMY_FRAMES_BASIC
+                  : type === 'fast'  ? ENEMY_FRAMES_FAST
+                  :                    ENEMY_FRAMES_TANK;
 
     const palette = type === 'basic' ? PALETTE_ENEMY_BASIC
                   : type === 'fast'  ? PALETTE_ENEMY_FAST
                   :                    PALETTE_ENEMY_TANK;
 
+    const frame = frames[frameIndex % frames.length];
+    const w = frame[0].length * ps;
+    const h = frame.length    * ps;
+
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(angle + Math.PI / 2);
 
-    const scale = type === 'tank' ? 1.5 : 1;
-    ctx.scale(scale, scale);
+    // Tank is already wide/tall via larger frame; small boost keeps her imposing
+    if (type === 'tank') ctx.scale(1.2, 1.2);
 
     drawSprite(ctx, frame, -w / 2, -h / 2, ps, palette);
 
