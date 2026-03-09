@@ -24,7 +24,7 @@ const game = {
     levelIndex: 0,
     waveIndex:  0,   // 0-based within current level
     screenFlash: 0,  // seconds remaining
-    nextHealthPackLevel: 0,  // level index when the next health pack is allowed
+    powerupTimer: 15,  // seconds until next combat powerup drops
 };
 
 // ---- Helpers ----
@@ -41,10 +41,9 @@ function startLevel(levelIndex) {
     if (!game.player) {
         game.player = new Player(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
     } else {
-        // Keep player, refill HP/ammo
-        game.player.hp     = game.player.maxHp;
-        game.player.ammo   = game.player.magSize;
-        game.player.dead   = false;
+        // Carry HP over — intentionally not reset between levels
+        game.player.ammo      = game.player.magSize;
+        game.player.dead      = false;
         game.player.reloading = false;
     }
 
@@ -57,9 +56,8 @@ function startLevel(levelIndex) {
 
 function startNewGame() {
     ScoreSystem.reset();
-    game.player = new Player(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
-    // Schedule first health pack after a random number of levels (2–10)
-    game.nextHealthPackLevel = 2 + Math.floor(Math.random() * 9);
+    game.player      = new Player(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    game.powerupTimer = 15;
     updateCamera();
     startLevel(0);
     gameState = 'PLAYING';
@@ -70,32 +68,14 @@ function startWave(waveIdx) {
     game.waveIndex = waveIdx;
     game.enemies   = [];
     game.bullets   = [];
+    game.powerups  = [];
     game.spawner.reset();
     game.spawner.loadWave(level.waves[waveIdx], game.camera.x, game.camera.y);
-    spawnWavePowerups();
-}
 
-// ---- Powerup spawning ----
-function spawnWavePowerups() {
-    game.powerups = [];
-    const camX = game.camera.x;
-    const camY = game.camera.y;
-
-    // Max 1 combat powerup per wave, 30% chance of it appearing at all
-    if (Math.random() < 0.30) {
-        const combatTypes = ['speed', 'strength'];
-        const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-        const p1 = _randomPowerupPos(camX, camY);
-        game.powerups.push(new Powerup(pick, p1.x, p1.y));
-    }
-
-    // Health pack: only on the first wave of a qualifying level.
-    // The next qualifying level is chosen randomly (interval 2–10 levels).
-    if (game.waveIndex === 0 && game.levelIndex >= game.nextHealthPackLevel) {
-        const p2 = _randomPowerupPos(camX, camY);
-        game.powerups.push(new Powerup('health', p2.x, p2.y));
-        // Schedule the next health pack 2–10 levels from now
-        game.nextHealthPackLevel = game.levelIndex + 2 + Math.floor(Math.random() * 9);
+    // Health pack: first wave of every even-numbered level (levels 2, 4, 6…)
+    if (game.waveIndex === 0 && (game.levelIndex + 1) % 2 === 0) {
+        const p = _randomPowerupPos(game.camera.x, game.camera.y);
+        game.powerups.push(new Powerup('health', p.x, p.y));
     }
 }
 
@@ -222,6 +202,16 @@ function updatePlaying(dt, mx, my) {
 
     // Update spawner
     game.spawner.update(dt, game.enemies, game.camera.x, game.camera.y);
+
+    // Timed combat powerup drop (every 15 seconds)
+    game.powerupTimer -= dt;
+    if (game.powerupTimer <= 0) {
+        game.powerupTimer = 15;
+        const combatTypes = ['speed', 'strength'];
+        const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
+        const pos  = _randomPowerupPos(game.camera.x, game.camera.y);
+        game.powerups.push(new Powerup(pick, pos.x, pos.y));
+    }
 
     // Update powerups + check player pickup
     game.powerups.forEach(pu => pu.update(dt));
