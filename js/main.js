@@ -289,8 +289,8 @@ function render() {
 function renderPlaying() {
     const cam = game.camera;
 
-    // Background grid
-    drawBackground(ctx, cam.x, cam.y, CANVAS_WIDTH, CANVAS_HEIGHT);
+    // Terrain background
+    drawTerrain(ctx, cam.x, cam.y, CANVAS_WIDTH, CANVAS_HEIGHT, gameTime);
 
     // Powerups (on the ground, under everything else)
     game.powerups.forEach(pu => pu.draw(ctx, cam.x, cam.y));
@@ -334,10 +334,12 @@ function renderPlaying() {
 
 // ---- Game Loop ----
 let lastTime = 0;
+let gameTime = 0;
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap at 50ms
     lastTime  = timestamp;
+    gameTime += dt;
 
     update(dt);
     render();
