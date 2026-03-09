@@ -81,18 +81,20 @@ function spawnWavePowerups() {
     // Always drop one random combat powerup (speed or strength)
     const combatTypes = ['speed', 'strength'];
     const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-    game.powerups.push(new Powerup(pick, _randomPowerupPos(camX, camY)));
+    const p1 = _randomPowerupPos(camX, camY);
+    game.powerups.push(new Powerup(pick, p1.x, p1.y));
 
     // 55% chance of a second combat powerup
     if (Math.random() < 0.55) {
         const pick2 = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-        game.powerups.push(new Powerup(pick2, _randomPowerupPos(camX, camY)));
+        const p2 = _randomPowerupPos(camX, camY);
+        game.powerups.push(new Powerup(pick2, p2.x, p2.y));
     }
 
     // 65% chance of a health pack
     if (Math.random() < 0.65) {
-        const pos = _randomPowerupPos(camX, camY);
-        game.powerups.push(new Powerup('health', pos));
+        const p3 = _randomPowerupPos(camX, camY);
+        game.powerups.push(new Powerup('health', p3.x, p3.y));
     }
 }
 
