@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Shooter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Core config & input -->
+    <script src="js/constants.js"></script>
+    <script src="js/input.js"></script>
+
+    <!-- Rendering helpers -->
+    <script src="js/sprites.js"></script>
+    <script src="js/animation.js"></script>
+
+    <!-- Level data -->
+    <script src="js/levels/levelData.js"></script>
+
+    <!-- Entities -->
+    <script src="js/entities/bullet.js"></script>
+    <script src="js/entities/particle.js"></script>
+    <script src="js/entities/enemy.js"></script>
+    <script src="js/entities/player.js"></script>
+
+    <!-- Systems -->
+    <script src="js/systems/collision.js"></script>
+    <script src="js/systems/spawner.js"></script>
+    <script src="js/systems/score.js"></script>
+
+    <!-- UI -->
+    <script src="js/ui/hud.js"></script>
+    <script src="js/ui/menu.js"></script>
+    <script src="js/ui/levelComplete.js"></script>
+    <script src="js/ui/gameOver.js"></script>
+
+    <!-- Main loop (last) -->
+    <script src="js/main.js"></script>
+</body>
+</html>
