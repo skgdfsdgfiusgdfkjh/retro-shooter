@@ -39,24 +39,41 @@ class Enemy {
     update(dt, playerX, playerY) {
         this.anim.update(dt);
 
-        const dx = playerX - this.x;
-        const dy = playerY - this.y;
+        const dx   = playerX - this.x;
+        const dy   = playerY - this.y;
         const dist = Math.hypot(dx, dy) || 1;
 
-        // Facing angle toward player
+        // Always face the player
         this.angle = Math.atan2(dy, dx);
 
-        let moveX = (dx / dist) * this.speed;
-        let moveY = (dy / dist) * this.speed;
+        // Movement: use flow field when far enough away to need wall navigation;
+        // switch to direct chase when almost adjacent (avoids jitter up close).
+        let moveX, moveY;
+        const closeRange = GRID_SIZE * 2.5;
+        if (dist < closeRange) {
+            moveX = (dx / dist) * this.speed;
+            moveY = (dy / dist) * this.speed;
+        } else {
+            const fd = getFlowDir(this.x, this.y);
+            if (fd) {
+                moveX = fd.dx * this.speed;
+                moveY = fd.dy * this.speed;
+            } else {
+                // Fallback: direct chase (e.g. isolated area, flow field not ready)
+                moveX = (dx / dist) * this.speed;
+                moveY = (dy / dist) * this.speed;
+            }
+        }
 
-        // Fast enemy zigzag
+        // Fast enemy zigzag perpendicular to current movement direction
         if (this.type === 'fast') {
             this.zigzagTimer += dt;
             if (this.zigzagTimer > 0.4) {
                 this.zigzagTimer = 0;
                 this.zigzagDir  *= -1;
             }
-            const perp = this.angle + Math.PI / 2;
+            const moveAngle = Math.atan2(moveY, moveX);
+            const perp      = moveAngle + Math.PI / 2;
             moveX += Math.cos(perp) * this.speed * 0.6 * this.zigzagDir;
             moveY += Math.sin(perp) * this.speed * 0.6 * this.zigzagDir;
         }

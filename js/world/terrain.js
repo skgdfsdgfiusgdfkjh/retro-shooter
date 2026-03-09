@@ -518,5 +518,97 @@ function resolveTerrainCollision(entity) {
     }
 }
 
+// ============================================================
+// Flow field pathfinding — BFS from player tile, shared by all enemies
+// ============================================================
+
+// 8-directional neighbour offsets
+const _FF_DIRS = [
+    [-1, 0], [1, 0], [0, -1], [0, 1],
+    [-1,-1], [1,-1], [-1, 1], [1, 1],
+];
+
+let _flowCost     = null;   // Uint16Array, one entry per tile; 65535 = unreachable
+let _flowPrevCol  = -1;
+let _flowPrevRow  = -1;
+
+function _computeFlowField(startCol, startRow) {
+    const N = MAP_COLS * MAP_ROWS;
+    if (!_flowCost) _flowCost = new Uint16Array(N);
+    _flowCost.fill(65535);
+
+    if (isTileSolid(startCol, startRow)) return;
+
+    _flowCost[startRow * MAP_COLS + startCol] = 0;
+
+    // Flat-pair array as BFS queue (avoids object allocation)
+    const q = [startCol, startRow];
+    let head = 0;
+
+    while (head < q.length) {
+        const c    = q[head++];
+        const r    = q[head++];
+        const next = _flowCost[r * MAP_COLS + c] + 1;
+
+        for (const [dc, dr] of _FF_DIRS) {
+            const nc = c + dc, nr = r + dr;
+            if (nc < 0 || nc >= MAP_COLS || nr < 0 || nr >= MAP_ROWS) continue;
+            if (isTileSolid(nc, nr)) continue;
+            // Prevent diagonal corner-cutting through walls
+            if (dc !== 0 && dr !== 0) {
+                if (isTileSolid(c + dc, r) || isTileSolid(c, r + dr)) continue;
+            }
+            if (_flowCost[nr * MAP_COLS + nc] !== 65535) continue;
+            _flowCost[nr * MAP_COLS + nc] = next;
+            q.push(nc, nr);
+        }
+    }
+}
+
+/**
+ * Call once per frame with the player's world position.
+ * Recomputes the flow field only when the player moves into a new tile.
+ */
+function updateFlowField(playerX, playerY) {
+    const pc = Math.floor(playerX / GRID_SIZE);
+    const pr = Math.floor(playerY / GRID_SIZE);
+    if (pc === _flowPrevCol && pr === _flowPrevRow) return;
+    _flowPrevCol = pc;
+    _flowPrevRow = pr;
+    _computeFlowField(pc, pr);
+}
+
+/**
+ * Returns a normalised {dx, dy} direction for an entity at (worldX, worldY)
+ * to move toward the player via the flow field.
+ * Returns null if unreachable or the field hasn't been computed yet.
+ */
+function getFlowDir(worldX, worldY) {
+    if (!_flowCost) return null;
+    const col = Math.floor(worldX / GRID_SIZE);
+    const row = Math.floor(worldY / GRID_SIZE);
+    if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return null;
+
+    const curCost = _flowCost[row * MAP_COLS + col];
+    if (curCost === 65535) return null;   // unreachable — fall back to direct chase
+
+    let bestCost = curCost;
+    let bestDc = 0, bestDr = 0;
+
+    for (const [dc, dr] of _FF_DIRS) {
+        const nc = col + dc, nr = row + dr;
+        if (nc < 0 || nc >= MAP_COLS || nr < 0 || nr >= MAP_ROWS) continue;
+        if (dc !== 0 && dr !== 0) {
+            if (isTileSolid(col + dc, row) || isTileSolid(col, row + dr)) continue;
+        }
+        const c = _flowCost[nr * MAP_COLS + nc];
+        if (c < bestCost) { bestCost = c; bestDc = dc; bestDr = dr; }
+    }
+
+    if (bestDc === 0 && bestDr === 0) return null;
+    const len = Math.hypot(bestDc, bestDr);
+    return { dx: bestDc / len, dy: bestDr / len };
+}
+
 // Generate map on script load (deterministic — no game-state dependency)
 generateTerrain();

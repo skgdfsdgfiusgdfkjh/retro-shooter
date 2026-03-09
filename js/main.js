@@ -195,9 +195,20 @@ function updatePlaying(dt, mx, my) {
     // Update camera
     updateCamera();
 
-    // Update bullets
+    // Update bullets — then kill any that entered a solid tile
     game.bullets.forEach(b => b.update(dt));
+    game.bullets.forEach(b => {
+        if (b.dead) return;
+        if (isTileSolid(Math.floor(b.x / GRID_SIZE), Math.floor(b.y / GRID_SIZE))) {
+            b.dead = true;
+            spawnDeathParticles(b.x, b.y, '#aaaaaa', 3)
+                .forEach(part => game.particles.push(part));
+        }
+    });
     game.bullets = game.bullets.filter(b => !b.dead);
+
+    // Refresh flow field (no-op if player hasn't moved to a new tile)
+    updateFlowField(p.x, p.y);
 
     // Update enemies
     game.enemies.forEach(e => {
