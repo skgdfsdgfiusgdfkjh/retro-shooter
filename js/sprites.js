@@ -299,6 +299,86 @@ const ENEMY_FRAMES_SNIPER = [
 ];
 
 // ---------------------------------------------------------------
+// Boss — "Yuki"  (11×15, rendered at PIXEL*2 for imposing size)
+// Purple hoodie girl: dark hair, flower, large purple eyes
+// ---------------------------------------------------------------
+const PALETTE_BOSS = [
+    null,           // 0 transparent
+    '#ffd0a8',      // 1 skin
+    '#221133',      // 2 dark hair / outline
+    '#9966ee',      // 3 lavender hoodie main
+    '#ccaaff',      // 4 hoodie light highlight
+    '#7733bb',      // 5 hoodie shadow / depth
+    '#dd88ff',      // 6 large purple eyes
+    '#ff88cc',      // 7 pink flower petals
+    '#332255',      // 8 dark mini skirt
+    '#ffe8f8',      // 9 hoodie drawstrings / white accents
+];
+
+const BOSS_FRAMES = [
+    // Frame 0 — idle
+    [
+        [0, 0, 2, 7, 7, 7, 2, 2, 0, 0, 0],  // flower cluster in hair
+        [0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0],  // hair crown wide
+        [2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0],  // face + flowing hair sides
+        [2, 2, 1, 6, 1, 1, 6, 1, 2, 2, 0],  // big purple eyes
+        [0, 2, 1, 1, 1, 1, 1, 2, 2, 0, 0],  // lower face + chin
+        [0, 2, 2, 3, 9, 9, 3, 2, 2, 0, 0],  // neck / collar + drawstrings
+        [0, 2, 3, 3, 3, 3, 3, 3, 2, 0, 0],  // hoodie chest
+        [2, 3, 4, 3, 3, 3, 3, 4, 3, 2, 0],  // wide hoodie shoulders + highlights
+        [2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 0],  // hoodie body wide
+        [2, 3, 5, 3, 3, 3, 3, 5, 3, 2, 0],  // hoodie lower with shadow pockets
+        [0, 2, 3, 3, 3, 3, 3, 3, 2, 0, 0],  // hoodie hem
+        [0, 0, 2, 8, 8, 8, 8, 2, 0, 0, 0],  // skirt upper
+        [0, 0, 0, 8, 8, 8, 8, 0, 0, 0, 0],  // skirt lower
+        [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],  // legs
+        [0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0],  // feet
+    ],
+    // Frame 1 — slow sway
+    [
+        [0, 0, 7, 7, 2, 2, 2, 2, 2, 0, 0],  // flower shifted left
+        [0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0],  // hair crown
+        [2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 0],  // face + hair
+        [2, 2, 1, 6, 1, 1, 6, 1, 2, 2, 0],  // eyes
+        [0, 2, 1, 1, 1, 1, 1, 2, 2, 0, 0],  // lower face
+        [0, 2, 2, 3, 9, 9, 3, 2, 2, 0, 0],  // collar + strings
+        [0, 2, 3, 3, 3, 3, 3, 3, 2, 0, 0],  // chest
+        [2, 3, 4, 3, 3, 3, 3, 4, 3, 2, 0],  // shoulders
+        [2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 0],  // body
+        [2, 3, 5, 3, 3, 3, 3, 5, 3, 2, 0],  // lower hoodie
+        [0, 2, 3, 3, 3, 3, 3, 3, 2, 0, 0],  // hem
+        [0, 0, 2, 8, 8, 8, 8, 2, 0, 0, 0],  // skirt
+        [0, 0, 8, 8, 0, 0, 8, 8, 0, 0, 0],  // legs showing through stride
+        [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0],  // legs apart
+        [0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0],  // feet
+    ],
+];
+
+// Phase aura colours (purple → pink → hot-pink as HP drops)
+const BOSS_PHASE_COLORS = ['#cc88ff', '#ff77cc', '#ff2266'];
+
+function drawBoss(ctx, cx, cy, angle, frameIndex, phase) {
+    const ps    = PIXEL * 2;   // double pixel size — boss is visually imposing
+    const frame = BOSS_FRAMES[frameIndex % BOSS_FRAMES.length];
+    const w     = frame[0].length * ps;
+    const h     = frame.length    * ps;
+    const aura  = BOSS_PHASE_COLORS[phase - 1];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle + Math.PI / 2);
+
+    // Phase aura glow behind sprite
+    ctx.shadowColor = aura;
+    ctx.shadowBlur  = phase === 3 ? 32 : 18;
+
+    drawSprite(ctx, frame, -w / 2, -h / 2, ps, PALETTE_BOSS);
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
+// ---------------------------------------------------------------
 // Draw player (centered at cx, cy, rotated by angle)
 // ---------------------------------------------------------------
 function drawPlayer(ctx, cx, cy, angle, frameIndex) {

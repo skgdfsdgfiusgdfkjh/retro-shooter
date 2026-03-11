@@ -20,6 +20,9 @@ const game = {
     enemyBullets: [],
     particles:    [],
     powerups:     [],
+    boss:         null,
+    bossDropTimer:  5,   // seconds until next boss-fight powerup drop
+    bossDeathTimer: 0,   // countdown after boss dies before level complete
     camera:    { x: 0, y: 0 },
     spawner:   new Spawner(),
     levelIndex: 0,
@@ -38,6 +41,9 @@ function startLevel(levelIndex) {
     game.enemyBullets = [];
     game.particles    = [];
     game.powerups     = [];
+    game.boss         = null;
+    game.bossDropTimer  = BOSS_POWERUP_INTERVAL;
+    game.bossDeathTimer = 0;
     game.spawner.reset();
 
     if (!game.player) {
@@ -52,8 +58,12 @@ function startLevel(levelIndex) {
     // Centre camera on player
     updateCamera();
 
-    // Start first wave
-    startWave(0);
+    if (level.isBoss) {
+        // Spawn boss at center of world
+        game.boss = new Boss(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+    } else {
+        startWave(0);
+    }
 }
 
 function startNewGame() {
@@ -169,7 +179,8 @@ function update(dt) {
 }
 
 function updatePlaying(dt, mx, my) {
-    const p = game.player;
+    const p     = game.player;
+    const level = LEVELS[game.levelIndex];
 
     // ESC → menu
     if (Input.isDown('Escape')) {
@@ -185,7 +196,6 @@ function updatePlaying(dt, mx, my) {
     const bullet = p.tryShoot();
     if (bullet) {
         game.bullets.push(bullet);
-        // Muzzle flash
         spawnMuzzleFlash(bullet.x, bullet.y, p.angle)
             .forEach(part => game.particles.push(part));
     }
@@ -193,12 +203,30 @@ function updatePlaying(dt, mx, my) {
     // Melee swing
     if (p.tryMelee()) {
         processMeleeHits(p, game.enemies, game.particles, ScoreSystem);
+
+        // Also check boss
+        if (game.boss && !game.boss.dead) {
+            const bdx  = game.boss.x - p.x;
+            const bdy  = game.boss.y - p.y;
+            const bdist = Math.hypot(bdx, bdy);
+            if (bdist <= MELEE_RANGE + game.boss.radius) {
+                let ang = Math.atan2(bdy, bdx) - p.meleeAngle;
+                while (ang >  Math.PI) ang -= Math.PI * 2;
+                while (ang < -Math.PI) ang += Math.PI * 2;
+                if (Math.abs(ang) <= MELEE_ARC + 0.2) {
+                    game.boss.takeDamage(MELEE_DAMAGE);
+                    game.boss.applyKnockback(bdx, bdy, 500);
+                    spawnDeathParticles(game.boss.x, game.boss.y, '#dd88ff', 5)
+                        .forEach(part => game.particles.push(part));
+                }
+            }
+        }
     }
 
     // Update camera
     updateCamera();
 
-    // Update bullets — then kill any that entered a solid tile
+    // Update player bullets — kill any that hit a wall
     game.bullets.forEach(b => b.update(dt));
     game.bullets.forEach(b => {
         if (b.dead) return;
@@ -208,23 +236,47 @@ function updatePlaying(dt, mx, my) {
                 .forEach(part => game.particles.push(part));
         }
     });
+
+    // Player bullets vs boss
+    if (game.boss && !game.boss.dead) {
+        for (let i = game.bullets.length - 1; i >= 0; i--) {
+            const b = game.bullets[i];
+            if (b.dead) continue;
+            if (circleCollide(b, game.boss)) {
+                b.dead = true;
+                game.boss.takeDamage(b.damage);
+                const count = game.boss.dead ? 14 : 4;
+                const col   = game.boss.dead ? '#dd88ff' : '#ffffff';
+                spawnDeathParticles(b.x, b.y, col, count)
+                    .forEach(part => game.particles.push(part));
+            }
+        }
+    }
+
     game.bullets = game.bullets.filter(b => !b.dead);
 
-    // Refresh flow field (no-op if player hasn't moved to a new tile)
+    // Refresh flow field
     updateFlowField(p.x, p.y);
 
-    // Update enemies — collect any shots fired this frame
+    // Update regular enemies
     game.enemies.forEach(e => {
         e.update(dt, p.x, p.y);
         resolveTerrainCollision(e);
         if (e.pendingBullet) {
             game.enemyBullets.push(e.pendingBullet);
-            // Muzzle flash at shot origin
             spawnMuzzleFlash(e.pendingBullet.x, e.pendingBullet.y, e.angle)
                 .forEach(part => game.particles.push(part));
             e.pendingBullet = null;
         }
     });
+
+    // Update boss
+    if (game.boss && !game.boss.dead) {
+        game.boss.update(dt, p.x, p.y);
+        // Drain boss bullets into the shared enemy-bullets array
+        game.boss.pendingBullets.forEach(b => game.enemyBullets.push(b));
+        game.boss.pendingBullets = [];
+    }
 
     // Update enemy bullets — kill those that hit walls
     game.enemyBullets.forEach(b => b.update(dt));
@@ -242,17 +294,33 @@ function updatePlaying(dt, mx, my) {
     game.particles.forEach(part => part.update(dt));
     game.particles = game.particles.filter(part => !part.dead);
 
-    // Update spawner
-    game.spawner.update(dt, game.enemies, game.camera.x, game.camera.y);
+    // Update spawner (only for non-boss levels)
+    if (!level.isBoss) {
+        game.spawner.update(dt, game.enemies, game.camera.x, game.camera.y);
+    }
 
-    // Timed combat powerup drop (every 15 seconds)
-    game.powerupTimer -= dt;
-    if (game.powerupTimer <= 0) {
-        game.powerupTimer = 15;
-        const combatTypes = ['speed', 'strength'];
-        const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
-        const pos  = _randomPowerupPos(game.camera.x, game.camera.y);
-        game.powerups.push(new Powerup(pick, pos.x, pos.y));
+    // Timed combat powerup drop — every 15 s during normal play
+    if (!level.isBoss) {
+        game.powerupTimer -= dt;
+        if (game.powerupTimer <= 0) {
+            game.powerupTimer = 15;
+            const combatTypes = ['speed', 'strength'];
+            const pick = combatTypes[Math.floor(Math.random() * combatTypes.length)];
+            const pos  = _randomPowerupPos(game.camera.x, game.camera.y);
+            game.powerups.push(new Powerup(pick, pos.x, pos.y));
+        }
+    }
+
+    // Boss fight: drop powerups + health packs every BOSS_POWERUP_INTERVAL seconds
+    if (level.isBoss && game.boss && !game.boss.dead) {
+        game.bossDropTimer -= dt;
+        if (game.bossDropTimer <= 0) {
+            game.bossDropTimer = BOSS_POWERUP_INTERVAL;
+            const dropTypes = ['speed', 'strength', 'health'];
+            const pick = dropTypes[Math.floor(Math.random() * dropTypes.length)];
+            const pos  = _randomPowerupPos(game.camera.x, game.camera.y);
+            game.powerups.push(new Powerup(pick, pos.x, pos.y));
+        }
     }
 
     // Update powerups + check player pickup
@@ -266,17 +334,22 @@ function updatePlaying(dt, mx, my) {
     game.powerups = game.powerups.filter(pu => !pu.dead);
 
     // Collisions — player bullets vs enemies, enemies vs player
-    const { screenFlash } = processCollisions(
-        game.bullets, game.enemies, p, game.particles, ScoreSystem
-    );
-    // Enemy bullets vs player
-    const { screenFlash: ebFlash } = processEnemyBulletCollisions(
-        game.enemyBullets, p, game.particles
-    );
-    if (screenFlash || ebFlash) game.screenFlash = 0.25;
+    let screenFlash = false;
+    const col1 = processCollisions(game.bullets, game.enemies, p, game.particles, ScoreSystem);
+    const col2 = processEnemyBulletCollisions(game.enemyBullets, p, game.particles);
+    if (col1.screenFlash || col2.screenFlash) screenFlash = true;
+
+    // Boss contact vs player
+    if (game.boss && !game.boss.dead && circleCollide(game.boss, p)) {
+        p.takeDamage(BOSS_CONTACT_DAMAGE);
+        game.boss.applyKnockback(game.boss.x - p.x, game.boss.y - p.y, 300);
+        if (p.hitFlashTimer > 0) screenFlash = true;
+    }
+
+    if (screenFlash) game.screenFlash = 0.25;
     if (game.screenFlash > 0) game.screenFlash -= dt;
 
-    // Remove dead enemies
+    // Remove dead regular enemies
     game.enemies = game.enemies.filter(e => !e.dead);
 
     // Player death
@@ -287,17 +360,40 @@ function updatePlaying(dt, mx, my) {
         return;
     }
 
+    // Boss death handler — fire once, then count down before level complete
+    if (game.boss && game.boss.dead && !game.boss._deathHandled) {
+        game.boss._deathHandled = true;
+        ScoreSystem.add(game.boss.score);
+        game.bossDeathTimer = 2.0;
+        // Big explosion of particles
+        for (let i = 0; i < 6; i++) {
+            spawnDeathParticles(
+                game.boss.x + (Math.random() - 0.5) * 80,
+                game.boss.y + (Math.random() - 0.5) * 80,
+                '#dd88ff', 16
+            ).forEach(part => game.particles.push(part));
+        }
+    }
+
     // Wave / level progression
-    if (game.spawner.waveComplete) {
-        game.spawner.waveComplete = false;
-        const level      = LEVELS[game.levelIndex];
-        const nextWave   = game.waveIndex + 1;
-        if (nextWave < level.waves.length) {
-            startWave(nextWave);
-        } else {
-            // Level complete
-            LevelCompleteScreen.enter(level.name, ScoreSystem.get());
-            gameState = 'LEVEL_COMPLETE';
+    if (level.isBoss) {
+        if (game.boss && game.boss._deathHandled) {
+            game.bossDeathTimer -= dt;
+            if (game.bossDeathTimer <= 0) {
+                LevelCompleteScreen.enter(level.name, ScoreSystem.get());
+                gameState = 'LEVEL_COMPLETE';
+            }
+        }
+    } else {
+        if (game.spawner.waveComplete) {
+            game.spawner.waveComplete = false;
+            const nextWave = game.waveIndex + 1;
+            if (nextWave < level.waves.length) {
+                startWave(nextWave);
+            } else {
+                LevelCompleteScreen.enter(level.name, ScoreSystem.get());
+                gameState = 'LEVEL_COMPLETE';
+            }
         }
     }
 }
@@ -339,12 +435,17 @@ function renderPlaying() {
     // Particles (behind enemies)
     game.particles.forEach(p => p.draw(ctx, cam.x, cam.y));
 
-    // Bullets (player = cyan, enemy = orange)
+    // Bullets (player = cyan, enemy = magenta)
     game.enemyBullets.forEach(b => b.draw(ctx, cam.x, cam.y));
     game.bullets.forEach(b => b.draw(ctx, cam.x, cam.y));
 
-    // Enemies
+    // Regular enemies
     game.enemies.forEach(e => e.draw(ctx, cam.x, cam.y));
+
+    // Boss
+    if (game.boss && !game.boss.dead) {
+        game.boss.draw(ctx, cam.x, cam.y);
+    }
 
     // Player (always screen center)
     if (game.player) game.player.draw(ctx);
@@ -359,7 +460,7 @@ function renderPlaying() {
     // Scanlines
     drawScanlines(ctx, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // HUD
+    // HUD (pass boss for health bar)
     const level = LEVELS[game.levelIndex];
     HUD.draw(
         ctx,
@@ -367,7 +468,8 @@ function renderPlaying() {
         ScoreSystem,
         level.name,
         game.waveIndex + 1,
-        level.waves.length
+        level.waves.length,
+        game.boss
     );
 
     // Custom cursor

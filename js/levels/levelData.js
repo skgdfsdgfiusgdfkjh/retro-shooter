@@ -32,10 +32,10 @@ const LEVELS = [
         ]
     },
     {
-        name: 'Level 5 — BOSS RUSH',
+        name: 'Level 5 — BOSS',
+        isBoss: true,
         waves: [
-            { count: 20, types: ['fast', 'tank', 'sniper'] },
-            { count: 25, types: ['basic', 'fast', 'tank', 'sniper'] },
+            { count: 0, types: [] },  // no regular enemies — boss spawns directly
         ]
     },
 ];

@@ -95,6 +95,14 @@ const MELEE_COOLDOWN = 0.55;           // seconds between swings
 const MELEE_DURATION = 0.22;           // seconds for the swing animation
 const MELEE_ARC      = Math.PI * 0.7; // half-arc (±126° total sweep)
 
+// Boss
+const BOSS_MAX_HP         = 800;
+const BOSS_RADIUS         = 42;
+const BOSS_SCORE          = 1000;
+const BOSS_CONTACT_DAMAGE = 22;  // contact (charge) hit
+const BOSS_BULLET_DAMAGE  = 18;  // per projectile
+const BOSS_POWERUP_INTERVAL = 5;  // seconds between powerup drops during boss fight
+
 // HUD
 const HUD_FONT       = '"Press Start 2P", monospace';
 const HUD_FONT_SMALL = '10px ' + HUD_FONT;
